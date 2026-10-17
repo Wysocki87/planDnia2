@@ -1,0 +1,2578 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rodzinny Plan Dnia Online 🌟</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            --card-bg: #ffffff;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+            --primary: #6c5ce7;
+            --success: #00b894;
+            --danger: #ff7675;
+            --warning: #fdcb6e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+        }
+
+        #appRoot {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 12px;
+            transform-origin: top left;
+        }
+
+        /* GÓRNY PASEK NAWIGACJI */
+        .top-bar {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 10px 18px;
+            border-radius: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .sync-badge {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #dfe6e9;
+            color: #636e72;
+            cursor: pointer;
+        }
+
+        .sync-badge.online {
+            background: #d3f9d8;
+            color: #2b8a3e;
+        }
+
+        .sync-badge.error {
+            background: #ffe3e3;
+            color: #c92a2a;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 11px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: transform 0.12s, background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: #2d3436; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: #f1f2f6; color: var(--text-dark); }
+
+        .global-zoom-box {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f2f6;
+            border-radius: 11px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .global-zoom-box button {
+            border: none;
+            background: white;
+            padding: 5px 9px;
+            border-radius: 8px;
+            font-weight: 900;
+            cursor: pointer;
+            font-size: 0.82rem;
+        }
+
+        /* WIDOK DZIECI - PEŁNY EKRAN */
+        .kids-board {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .kids-board.layout-columns {
+            flex-direction: row;
+        }
+
+        .kids-board.layout-rows {
+            flex-direction: column;
+        }
+
+        .kid-column {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 22px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
+            --kid-scale: 1;
+        }
+
+        .kid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .kid-identity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .kid-avatar {
+            font-size: 2.1rem;
+            background: #f1f2f6;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kid-name {
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+
+        .kid-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            background: #f1f2f6;
+            border-radius: 10px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .zoom-btn {
+            border: none;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 7px;
+            font-weight: 900;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+
+        .kid-stars {
+            background: #fff9db;
+            border: 2px solid #ffd43b;
+            color: #f08c00;
+            padding: 4px 12px;
+            border-radius: 18px;
+            font-weight: 900;
+            font-size: 1rem;
+        }
+
+        /* PASEK POSTĘPU */
+        .progress-container {
+            background: #dfe6e9;
+            height: 18px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00b894, #55efc4);
+            width: 0%;
+            transition: width 0.35s ease;
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: #2d3436;
+        }
+
+        /* LISTA ZADAŃ Z NIEZALEŻNYM PRZEWIJANIEM */
+        .task-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: calc(8px * var(--kid-scale));
+            padding-right: 4px;
+            position: relative;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: calc(14px * var(--kid-scale));
+            padding: calc(10px * var(--kid-scale)) calc(12px * var(--kid-scale));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: calc(10px * var(--kid-scale));
+            transition: transform 0.5s ease, background 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+            cursor: grab;
+        }
+
+        .task-item.dragging {
+            opacity: 0.4;
+            border: 2px dashed var(--primary);
+        }
+
+        .task-item.done {
+            background: #e6fcf5;
+            border-color: #63e6be;
+            opacity: 0.85;
+        }
+
+        .task-item.done .task-title {
+            text-decoration: line-through;
+            color: #636e72;
+        }
+
+        .task-left {
+            display: flex;
+            align-items: center;
+            gap: calc(10px * var(--kid-scale));
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .check-circle {
+            width: calc(28px * var(--kid-scale));
+            height: calc(28px * var(--kid-scale));
+            border-radius: 50%;
+            border: 3px solid #b2bec3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(0.95rem * var(--kid-scale));
+            color: transparent;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .task-item.done .check-circle,
+        .reward-item.done .check-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .task-icon {
+            font-size: calc(1.5rem * var(--kid-scale));
+        }
+
+        .task-title {
+            font-size: calc(1rem * var(--kid-scale));
+            font-weight: 800;
+            word-break: break-word;
+        }
+
+        .order-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .btn-move {
+            background: #e9ecef;
+            border: none;
+            border-radius: 5px;
+            padding: calc(3px * var(--kid-scale)) calc(6px * var(--kid-scale));
+            font-size: calc(0.7rem * var(--kid-scale));
+            cursor: pointer;
+        }
+
+        .all-done-banner {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            padding: calc(10px * var(--kid-scale));
+            border-radius: calc(12px * var(--kid-scale));
+            text-align: center;
+            font-weight: 900;
+            color: #d35400;
+            font-size: calc(0.9rem * var(--kid-scale));
+            flex-shrink: 0;
+        }
+
+        /* SEKCJA NAGRÓD - TĘCZOWA, SKALOWALNA, MAX 20% WYSOKOŚCI, PRZEWIJANA, Z ODKLIKANIEM */
+        .rewards-section {
+            flex-shrink: 0;
+            max-height: 20%;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 20%, #fbc2eb 40%, #a1c4fd 60%, #c2e9fb 80%, #d4fc79 100%);
+            border-radius: calc(14px * var(--kid-scale));
+            padding: calc(8px * var(--kid-scale)) calc(10px * var(--kid-scale));
+            border: 2px solid rgba(255,255,255,0.85);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: calc(6px * var(--kid-scale));
+        }
+
+        .rewards-header {
+            font-size: calc(0.85rem * var(--kid-scale));
+            font-weight: 900;
+            color: #2d3436;
+            display: flex;
+            align-items: center;
+            gap: calc(6px * var(--kid-scale));
+            text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+        }
+
+        .rewards-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: calc(5px * var(--kid-scale));
+        }
+
+        .reward-item {
+            background: rgba(255, 255, 255, 0.92);
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            border-radius: calc(11px * var(--kid-scale));
+            padding: calc(6px * var(--kid-scale)) calc(10px * var(--kid-scale));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: calc(8px * var(--kid-scale));
+            font-weight: 800;
+            font-size: calc(0.92rem * var(--kid-scale));
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reward-item.done {
+            background: rgba(230, 252, 245, 0.92);
+            border-color: #63e6be;
+            opacity: 0.85;
+        }
+
+        .reward-item.done .reward-title {
+            text-decoration: line-through;
+            color: #636e72;
+        }
+
+        .reward-left {
+            display: flex;
+            align-items: center;
+            gap: calc(8px * var(--kid-scale));
+            flex: 1;
+        }
+
+        .reward-icon {
+            font-size: calc(1.3rem * var(--kid-scale));
+        }
+
+        .reward-title {
+            color: #2d3436;
+            word-break: break-word;
+            font-size: calc(0.92rem * var(--kid-scale));
+        }
+
+        /* SZYBKIE DODAWANIE ZADANIA PRZEZ DZIECKO */
+        .kid-add-footer {
+            flex-shrink: 0;
+            border-top: 1px solid #f1f2f6;
+            padding-top: 6px;
+        }
+
+        .kid-add-drawer {
+            display: none;
+            background: #f8f9fa;
+            border: 2px solid #dfe6e9;
+            border-radius: 14px;
+            padding: 10px;
+            margin-top: 6px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .kid-add-drawer.open {
+            display: flex;
+        }
+
+        .quick-chips {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .quick-chip {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* PANEL RODZICA */
+        .parent-panel {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1150px;
+            width: 100%;
+            margin: 0 auto;
+            padding-bottom: 30px;
+        }
+
+        .admin-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+
+        .admin-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 14px;
+            color: var(--primary);
+            border-bottom: 2px solid #f1f2f6;
+            padding-bottom: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .input-text, .select-input {
+            padding: 9px 13px;
+            border-radius: 10px;
+            border: 2px solid #dfe6e9;
+            font-size: 0.95rem;
+            font-weight: 700;
+            outline: none;
+        }
+
+        .emoji-grid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .emoji-option {
+            font-size: 1.35rem;
+            padding: 6px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.08);
+        }
+
+        .emoji-option.selected {
+            border-color: var(--primary);
+            background: #efecff;
+        }
+
+        .emoji-more-btn {
+            font-size: 0.9rem;
+            font-weight: 900;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 2px dashed var(--primary);
+            background: #f3f0ff;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .kids-Checkboxes {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .kid-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 800;
+            cursor: pointer;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 2px solid #dfe6e9;
+        }
+
+        .admin-task-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge-kid {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: white;
+            margin-right: 4px;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .preset-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 16px;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 22px;
+            border-radius: 20px;
+            max-width: 680px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .emoji-category-title {
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: var(--text-muted);
+            margin: 10px 0 6px 0;
+        }
+    </style>
+</head>
+<body>
+<div id="appRoot">
+    <!-- GÓRNY PASEK -->
+    <div class="top-bar">
+        <div class="app-title">
+            <span>🚀</span> Rodzinny Plan Dnia
+            <span id="syncStatusBadge" class="sync-badge" onclick="handleSyncBadgeClick()" title="Status synchronizacji między urządzeniami">
+                ☁️ Tryb lokalny
+            </span>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-outline" id="layoutToggleBtn" onclick="toggleBoardLayout()">📐 Układ: Obok siebie</button>
+            <div class="global-zoom-box">
+                <span style="font-size:0.78rem; font-weight:800; padding:0 6px;">Skala (40-120%):</span>
+                <button onclick="changeGlobalScale(-0.1)">🔍-</button>
+                <button id="globalScaleLabel" onclick="resetGlobalScale()">100%</button>
+                <button onclick="changeGlobalScale(0.1)">🔍+</button>
+            </div>
+            <button class="btn btn-outline" onclick="toggleFullScreen()">⛶ Pełny ekran</button>
+            <button class="btn btn-success" onclick="resetAllProgress()">🔄 Nowy Dzień</button>
+            <button class="btn btn-primary" id="toggleViewBtn" onclick="handleViewSwitch()">🔒 Panel Rodzica</button>
+        </div>
+    </div>
+
+    <!-- WIDOK TABLIC DZIECI -->
+    <div id="kidsView" class="kids-board layout-columns"></div>
+
+    <!-- PANEL ADMINISTRACYJNY RODZICA -->
+    <div id="parentView" class="parent-panel">
+
+        <!-- 0. SYNCHRONIZACJA I LOGOWANIE DO BAZY FIREBASE -->
+        <div class="admin-section" style="border: 2px solid #74b9ff; background: #f1f9ff;">
+            <h2>☁️ 0. Synchronizacja Online + Logowanie do Bazy (Firebase Auth)</h2>
+            <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:10px; font-weight:700;">
+                Możesz korzystać z bazy publicznej (wystarczy sam link Database URL) lub zabezpieczonej hasłem (wypełnij dodatkowo Web API Key, E-mail oraz Hasło użytkownika Firebase Authentication).
+            </p>
+            <div class="form-row">
+                <input type="text" id="cloudDbUrlInput" class="input-text" style="flex:2; min-width:240px;" placeholder="Database URL (np. https://twoja-baza.firebasedatabase.app)">
+                <input type="text" id="cloudRoomIdInput" class="input-text" style="flex:1; min-width:130px;" placeholder="Kod rodziny (np. dom1)">
+            </div>
+            <div class="form-row" style="background: rgba(255,255,255,0.7); padding: 10px; border-radius: 12px; border: 1px solid #cce5ff;">
+                <span style="font-weight:900; font-size:0.85rem; width:100%; color:#0984e3;">🔐 Dane logowania do bazy (opcjonalnie dla reguł auth != null):</span>
+                <input type="text" id="cloudApiKeyInput" class="input-text" style="flex:1; min-width:180px;" placeholder="Firebase Web API Key (AIzaSy...)">
+                <input type="email" id="cloudEmailInput" class="input-text" style="flex:1; min-width:170px;" placeholder="E-mail (np. rodzic@dom.pl)">
+                <input type="password" id="cloudPasswordInput" class="input-text" style="flex:1; min-width:140px;" placeholder="Hasło do bazy">
+            </div>
+            <div class="form-row">
+                <button class="btn btn-primary" onclick="saveCloudConfig()">🔗 Zaloguj, połącz i pobierz z bazy</button>
+                <button class="btn btn-warning" onclick="pushToCloud()">⬆️ Wyślij obecny stan do bazy</button>
+                <button class="btn btn-outline" onclick="logoutCloudSession()">🚪 Wyloguj z chmury</button>
+            </div>
+            <div id="cloudHelpText" style="font-size:0.82rem; color:#0984e3; font-weight:700;"></div>
+        </div>
+
+        <!-- 1. ZARZĄDZANIE DZIEĆMI -->
+        <div class="admin-section">
+            <h2>👧👦 1. Dzieci (Kolumny na tablicy)</h2>
+            <div class="form-row">
+                <input type="text" id="newKidName" class="input-text" placeholder="Imię dziecka (np. Zosia)">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <select id="newKidAvatar" class="select-input">
+                        <option value="👦">👦 Chłopiec</option>
+                        <option value="👧">👧 Dziewczynka</option>
+                        <option value="🦊">🦊 Lisek</option>
+                        <option value="🐱">🐱 Kotek</option>
+                        <option value="🐶">🐶 Piesek</option>
+                        <option value="🦄">🦄 Jednorożec</option>
+                        <option value="🦖">🦖 Dinozaur</option>
+                        <option value="🐼">🐼 Panda</option>
+                        <option value="🦁">🦁 Lew</option>
+                        <option value="🐸">🐸 Żabka</option>
+                    </select>
+                    <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('newKidAvatar')">➕</button>
+                </div>
+                <select id="newKidColor" class="select-input">
+                    <option value="#6c5ce7">🟣 Fioletowy</option>
+                    <option value="#0984e3">🔵 Niebieski</option>
+                    <option value="#00b894">🟢 Zielony</option>
+                    <option value="#e84393">🩷 Różowy</option>
+                    <option value="#e17055">🟠 Pomarańczowy</option>
+                    <option value="#d63031">🔴 Czerwony</option>
+                    <option value="#fdcb6e">🟡 Złoty</option>
+                </select>
+                <button class="btn btn-primary" onclick="addKid()">➕ Dodaj dziecko</button>
+            </div>
+            <div id="adminKidsList" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        </div>
+
+        <!-- 2. DODAWANIE I EDYCJA ZADAŃ -->
+        <div class="admin-section">
+            <h2>📋 2. Dodaj nowe zadanie</h2>
+            <div class="emoji-grid" id="emojiPicker"></div>
+            <div class="form-row">
+                <input type="text" id="newTaskText" class="input-text" style="flex:1;" placeholder="Wpisz czynność (np. Odrobić lekcje z matematyki)">
+            </div>
+            <div class="kids-Checkboxes">
+                <span style="font-weight:900;">Dla kogo?</span>
+                <button type="button" class="btn btn-outline" style="padding:4px 8px; font-size:0.78rem;" onclick="selectAllKidsForTask(true)">Wszyscy</button>
+                <div id="taskKidsCheckboxes" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+            </div>
+            <button class="btn btn-success" onclick="addTaskFromAdmin()">➕ Dodaj zadanie do planu</button>
+
+            <h3 style="margin: 18px 0 10px 0; font-size:1.05rem;">Aktualne zadania na tablicy:</h3>
+            <div id="adminTasksList"></div>
+        </div>
+
+        <!-- 3. NAGRODY DLA DZIECI -->
+        <div class="admin-section">
+            <h2>🎁 3. Nagrody dla dzieci (wyświetlane na dole tablicy)</h2>
+            <div class="emoji-grid" id="rewardEmojiPicker"></div>
+            <div class="form-row">
+                <input type="text" id="newRewardText" class="input-text" style="flex:1;" placeholder="Wpisz nagrodę (np. 30 minut bajki / Wyjście na lody 🍦)">
+            </div>
+            <div class="kids-Checkboxes">
+                <span style="font-weight:900;">Dla kogo nagroda?</span>
+                <button type="button" class="btn btn-outline" style="padding:4px 8px; font-size:0.78rem;" onclick="selectAllKidsForReward(true)">Wszyscy</button>
+                <div id="rewardKidsCheckboxes" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+            </div>
+            <button class="btn btn-success" onclick="addRewardFromAdmin()">➕ Dodaj nagrodę</button>
+
+            <h3 style="margin: 18px 0 10px 0; font-size:1.05rem;">Aktualne nagrody:</h3>
+            <div id="adminRewardsList"></div>
+        </div>
+
+        <!-- 4. SCHEMATY ZADAŃ -->
+        <div class="admin-section">
+            <h2>💾 4. Domyślne schematy zadań (Szablony zadań)</h2>
+            <div class="form-row">
+                <input type="text" id="newPresetName" class="input-text" style="flex:1;" placeholder="Nazwa schematu zadań (np. Dzień szkolny - 3 klasa)">
+                <button class="btn btn-primary" onclick="saveCurrentAsPreset()">💾 Zapisz obecne zadania jako schemat</button>
+            </div>
+            <div id="presetsList" class="presets-grid"></div>
+        </div>
+
+        <!-- 5. SCHEMATY NAGRÓD -->
+        <div class="admin-section">
+            <h2>🏆 5. Domyślne schematy nagród (Szablony nagród)</h2>
+            <div class="form-row">
+                <input type="text" id="newRewardPresetName" class="input-text" style="flex:1;" placeholder="Nazwa schematu nagród (np. Nagrody weekendowe / Super tydzień)">
+                <button class="btn btn-primary" onclick="saveCurrentRewardsAsPreset()">💾 Zapisz obecne nagrody jako schemat</button>
+            </div>
+            <div id="rewardPresetsList" class="presets-grid"></div>
+        </div>
+
+        <!-- 6. PIN -->
+        <div class="admin-section">
+            <h2>🔐 6. Kod PIN Rodzica</h2>
+            <div class="form-row">
+                <input type="password" id="newPinInput" class="input-text" placeholder="Nowy PIN (np. 1234)" maxlength="8">
+                <button class="btn btn-warning" onclick="changePin()">Zmień PIN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL BIBLIOTEKI WSZYSTKICH OBRAZKÓW (+) -->
+<div id="emojiLibraryModal" class="modal-overlay" style="z-index: 1100;">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="color:var(--primary);">🎨 Wybierz obrazek z pełnej listy</h3>
+            <button class="btn btn-outline" onclick="closeEmojiLibrary()">✖ Zamknij</button>
+        </div>
+        <div id="emojiLibraryContent"></div>
+    </div>
+</div>
+
+<!-- MODAL EDYCJI DZIECKA -->
+<div id="editKidModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:460px;">
+        <h3 style="margin-bottom:12px; color:var(--primary);">✏️ Edytuj profil dziecka</h3>
+        <input type="hidden" id="editKidId">
+        <div class="form-row">
+            <input type="text" id="editKidAvatarInput" class="input-text" style="width:65px; text-align:center; font-size:1.4rem;">
+            <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('editKidAvatarInput')">➕ Wybierz obrazek</button>
+        </div>
+        <div class="form-row">
+            <input type="text" id="editKidNameInput" class="input-text" style="flex:1;" placeholder="Imię dziecka">
+        </div>
+        <div class="form-row">
+            <label style="font-weight:800;">Kolor tablicy:</label>
+            <select id="editKidColorInput" class="select-input" style="flex:1;">
+                <option value="#6c5ce7">🟣 Fioletowy</option>
+                <option value="#0984e3">🔵 Niebieski</option>
+                <option value="#00b894">🟢 Zielony</option>
+                <option value="#e84393">🩷 Różowy</option>
+                <option value="#e17055">🟠 Pomarańczowy</option>
+                <option value="#d63031">🔴 Czerwony</option>
+                <option value="#fdcb6e">🟡 Złoty</option>
+            </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+            <button class="btn btn-outline" onclick="closeEditKidModal()">Anuluj</button>
+            <button class="btn btn-primary" onclick="saveEditedKid()">💾 Zapisz</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDYCJI ZADANIA -->
+<div id="editTaskModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px; color:var(--primary);">✏️ Edytuj zadanie</h3>
+        <input type="hidden" id="editTaskId">
+        <div class="form-row">
+            <input type="text" id="editTaskIcon" class="input-text" style="width:65px; text-align:center; font-size:1.3rem;">
+            <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('editTaskIcon')">➕</button>
+            <input type="text" id="editTaskTitle" class="input-text" style="flex:1;">
+        </div>
+        <div id="editTaskKidsBox" class="kids-Checkboxes"></div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-outline" onclick="closeEditModal()">Anuluj</button>
+            <button class="btn btn-primary" onclick="saveEditedTask()">Zapisz</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDYCJI NAGRODY -->
+<div id="editRewardModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px; color:var(--primary);">✏️ Edytuj nagrodę</h3>
+        <input type="hidden" id="editRewardId">
+        <div class="form-row">
+            <input type="text" id="editRewardIcon" class="input-text" style="width:65px; text-align:center; font-size:1.3rem;">
+            <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('editRewardIcon')">➕</button>
+            <input type="text" id="editRewardTitle" class="input-text" style="flex:1;">
+        </div>
+        <div id="editRewardKidsBox" class="kids-Checkboxes"></div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-outline" onclick="closeEditRewardModal()">Anuluj</button>
+            <button class="btn btn-primary" onclick="saveEditedReward()">Zapisz</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDYCJI SCHEMATU ZADAŃ -->
+<div id="editPresetModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px; color:var(--primary);">✏️ Edytuj schemat zadań</h3>
+        <input type="hidden" id="editPresetId">
+        <div class="form-row">
+            <input type="text" id="editPresetNameInput" class="input-text" style="flex:1;" placeholder="Nazwa schematu">
+        </div>
+        <div style="background:#f1f2f6; padding:10px; border-radius:12px; margin-bottom:12px;">
+            <div style="font-weight:800; font-size:0.88rem; margin-bottom:6px;">➕ Dodaj zadanie do tego schematu:</div>
+            <div class="form-row" style="margin-bottom:0;">
+                <input type="text" id="presetNewTaskIcon" class="input-text" style="width:55px; text-align:center;" value="📚">
+                <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('presetNewTaskIcon')">➕</button>
+                <input type="text" id="presetNewTaskTitle" class="input-text" style="flex:1;" placeholder="Treść zadania w schemacie">
+                <button class="btn btn-success" onclick="addTaskToEditedPreset()">Dodaj</button>
+            </div>
+        </div>
+        <div id="editPresetTasksContainer" style="max-height:300px; overflow-y:auto; margin-bottom:14px;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-outline" onclick="closePresetModal()">Zamknij</button>
+            <button class="btn btn-primary" onclick="saveEditedPresetModal()">💾 Zapisz schemat</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDYCJI SCHEMATU NAGRÓD -->
+<div id="editRewardPresetModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="margin-bottom:12px; color:var(--primary);">✏️ Edytuj schemat nagród</h3>
+        <input type="hidden" id="editRewardPresetId">
+        <div class="form-row">
+            <input type="text" id="editRewardPresetNameInput" class="input-text" style="flex:1;" placeholder="Nazwa schematu nagród">
+        </div>
+        <div style="background:#f1f2f6; padding:10px; border-radius:12px; margin-bottom:12px;">
+            <div style="font-weight:800; font-size:0.88rem; margin-bottom:6px;">➕ Dodaj nagrodę do tego schematu:</div>
+            <div class="form-row" style="margin-bottom:0;">
+                <input type="text" id="rewardPresetNewIcon" class="input-text" style="width:55px; text-align:center;" value="🍦">
+                <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('rewardPresetNewIcon')">➕</button>
+                <input type="text" id="rewardPresetNewTitle" class="input-text" style="flex:1;" placeholder="Treść nagrody w schemacie">
+                <button class="btn btn-success" onclick="addRewardToEditedPreset()">Dodaj</button>
+            </div>
+        </div>
+        <div id="editRewardPresetItemsContainer" style="max-height:300px; overflow-y:auto; margin-bottom:14px;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-outline" onclick="closeRewardPresetModal()">Zamknij</button>
+            <button class="btn btn-primary" onclick="saveEditedRewardPresetModal()">💾 Zapisz schemat nagród</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const EMOJIS = ['📚', '🎒', '🛏️', '🪥', '🍽️', '🧹', '🐕', '⚽', '🎨', '🎹', '🚿', '👕', '🍎', '🚲', '🇬🇧', '🧩'];
+    const REWARD_EMOJIS = ['🍦', '🎮', '🚲', '🍿', '🧸', '🏆', '⭐', '🎁', '🎨', '⚽', '🍕', '🎉'];
+
+    const ALL_EMOJIS_CATALOG = {
+        "👧 Dzieci, Postacie i Bohaterowie": [
+            '👦','👧','🧒','👶','🦸‍♂️','🦸‍♀️','🧙‍♂️','🧚‍♀️','🧜‍♀️','🤴','👸','🥷','🧑‍🚀','🧑‍🚒','👮','🕵️','🤠','🏴‍☠️','🤖','👽','👻','⛄','😇','😎','🥳','🤩'
+        ],
+        "🐶 Zwierzęta i Przyroda": [
+            '🐶','🐱','🦊','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🦖','🦕','🐢','🐙','🐬','🐳','🦈','🦋','🐝','🐞','🦉','🐧','🐤','🐹','🐰','🐻','🐎','🦜','🦩','🦔','🐿️','🌈','☀️','🌙','⭐','🌸','🌻','🍀','🌵'
+        ],
+        "📚 Szkoła, Nauka i Domowe Obowiązki": [
+            '📚','📖','📝','✏️','🖊️','📐','📏','🎒','💻','🖥️','🔬','🔭','🌍','🇬🇧','🇩🇪','🇪🇸','🧮','🛏️','🪥','🧼','🚿','🛁','👕','👖','🧦','👟','🧹','🧺','🧽','🗑️','🍽️','🥣','🥛','🪴','⏰','📅','🔑'
+        ],
+        "⚽ Sport, Muzyka i Hobby": [
+            '⚽','🏀','🏐','🎾','🏸','🏓','🥋','🥊','🏊','🚴','🛴','🛹','⛸️','🎿','🏇','🧘','🤸','🎨','🎭','🎬','🎤','🎧','🎹','🎸','🥁','🎺','🎻','🎲','♟️','🧩','🎯','🎳','🪁','🎣','🏕️'
+        ],
+        "🍦 Nagrody, Słodycze i Rozrywka": [
+            '🍦','🍧','🍨','🍩','🍪','🎂','🧁','🍰','🍫','🍬','🍭','🍮','🍯','🍕','🍔','🍟','🌭','🍿','🧇','🥞','🍓','🍒','🍉','🍎','🍌','🍇','🎮','🕹️','📱','📺','🎟️','🎪','🎢','🎡','🎠','🏖️','✈️','🚀','🛸','🧸','🪄','🎀','🎁','🎈','🎉','🎊','🏆','🥇','🎖️','👑','💎','💰','💵'
+        ]
+    };
+
+    let selectedEmoji = '📚';
+    let selectedRewardEmoji = '🍦';
+    let emojiPickerTarget = null;
+    let isParentMode = false;
+    let scrollPositions = {};
+    let openKidDrawers = {};
+    let kidSelectedEmoji = {};
+    let draggedTaskInfo = null;
+    let lastSyncedUpdatedAt = 0;
+    let isInitialCloudSyncDone = false;
+
+    const DEFAULT_STATE = {
+        updatedAt: 0,
+        pin: '1234',
+        layout: 'columns',
+        globalScale: 1,
+        kids: [
+            { id: 'kid_1', name: 'Kuba', avatar: '👦', color: '#6c5ce7', zoom: 1 },
+            { id: 'kid_2', name: 'Maja', avatar: '👧', color: '#e84393', zoom: 1 }
+        ],
+        tasks: [
+            { id: 't_1', title: 'Pościelić łóżko i przewietrzyć pokój', icon: '🛏️', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 0, kid_2: 0 } },
+            { id: 't_2', title: 'Umyć zęby i ubrać się do szkoły', icon: '🪥', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 1, kid_2: 1 } },
+            { id: 't_3', title: 'Odrobić pracę domową (3 klasa)', icon: '📚', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 2, kid_2: 2 } },
+            { id: 't_4', title: 'Spakować plecak na jutro', icon: '🎒', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 3, kid_2: 3 } },
+            { id: 't_5', title: 'Nakarmić pupila / Wyprowadzić psa', icon: '🐕', assignedKids: ['kid_1'], statusByKid: {}, orderByKid: { kid_1: 4 } },
+            { id: 't_6', title: 'Poćwiczyć czytanie przez 15 minut', icon: '🎨', assignedKids: ['kid_2'], statusByKid: {}, orderByKid: { kid_2: 4 } }
+        ],
+        rewards: [
+            { id: 'r_1', title: '30 minut ulubionej gry lub bajki 🎮', icon: '🎮', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 0, kid_2: 0 } },
+            { id: 'r_2', title: 'Wyjście na lody lub deser 🍦', icon: '🍦', assignedKids: ['kid_1', 'kid_2'], statusByKid: {}, orderByKid: { kid_1: 1, kid_2: 1 } }
+        ],
+        presets: [
+            {
+                id: 'preset_school',
+                name: '🏫 Dzień Szkolny (Standard)',
+                tasks: [
+                    { id: 'p1', title: 'Pościelić łóżko', icon: '🛏️', assignedKids: ['ALL'] },
+                    { id: 'p2', title: 'Mycie zębów i poranna toaleta', icon: '🪥', assignedKids: ['ALL'] },
+                    { id: 'p3', title: 'Odrobić lekcje', icon: '📚', assignedKids: ['ALL'] },
+                    { id: 'p4', title: 'Spakować plecak do szkoły', icon: '🎒', assignedKids: ['ALL'] }
+                ]
+            },
+            {
+                id: 'preset_weekend',
+                name: '☀️ Weekend / Sobota',
+                tasks: [
+                    { id: 'w1', title: 'Śniadanie i pościelenie łóżka', icon: '🍽️', assignedKids: ['ALL'] },
+                    { id: 'w2', title: 'Porządki w pokoju', icon: '🧹', assignedKids: ['ALL'] },
+                    { id: 'w3', title: 'Spacer lub rower', icon: '🚲', assignedKids: ['ALL'] }
+                ]
+            }
+        ],
+        rewardPresets: [
+            {
+                id: 'rpreset_standard',
+                name: '🍦 Nagrody Codzienne',
+                rewards: [
+                    { id: 'rp1', title: '30 minut bajki lub gry', icon: '🎮', assignedKids: ['ALL'] },
+                    { id: 'rp2', title: 'Słodki deser po obiedzie', icon: '🍦', assignedKids: ['ALL'] }
+                ]
+            },
+            {
+                id: 'rpreset_weekend',
+                name: '🎢 Nagrody Weekendowe',
+                rewards: [
+                    { id: 'rw1', title: 'Wspólny wieczór filmowy z popcornem', icon: '🍿', assignedKids: ['ALL'] },
+                    { id: 'rw2', title: 'Wycieczka rowerowa lub sala zabaw', icon: '🚲', assignedKids: ['ALL'] }
+                ]
+            }
+        ]
+    };
+
+    let cloudConfig = loadCloudConfig();
+    let appData = loadData();
+
+    function loadCloudConfig() {
+        const params = new URLSearchParams(window.location.search);
+        const urlDb = params.get('db');
+        const urlRoom = params.get('room');
+        const urlApiKey = params.get('apiKey');
+        const urlRt = params.get('rt');
+
+        let saved = {};
+        try {
+            saved = JSON.parse(localStorage.getItem('rodzinnyPlan_cloudCfg') || '{}');
+        } catch (e) {}
+
+        if (urlDb) {
+            const cfg = {
+                dbUrl: urlDb.replace(/\/+$/, ''),
+                roomId: (urlRoom || saved.roomId || 'rodzina1').trim(),
+                apiKey: urlApiKey || saved.apiKey || '',
+                email: saved.email || '',
+                idToken: saved.idToken || '',
+                refreshToken: urlRt || saved.refreshToken || '',
+                tokenExpiresAt: saved.tokenExpiresAt || 0
+            };
+            localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cfg));
+            return cfg;
+        }
+        return {
+            dbUrl: saved.dbUrl || '',
+            roomId: saved.roomId || 'rodzina1',
+            apiKey: saved.apiKey || '',
+            email: saved.email || '',
+            idToken: saved.idToken || '',
+            refreshToken: saved.refreshToken || '',
+            tokenExpiresAt: saved.tokenExpiresAt || 0
+        };
+    }
+
+    function loadData() {
+        const raw = localStorage.getItem('rodzinnyPlanFull_v3');
+        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        try {
+            const parsed = JSON.parse(raw);
+            if (!parsed.layout) parsed.layout = 'columns';
+            if (!parsed.globalScale) parsed.globalScale = 1;
+            if (parsed.updatedAt === undefined) parsed.updatedAt = 0;
+            if (!parsed.rewards) parsed.rewards = JSON.parse(JSON.stringify(DEFAULT_STATE.rewards));
+            if (!parsed.rewardPresets) parsed.rewardPresets = JSON.parse(JSON.stringify(DEFAULT_STATE.rewardPresets));
+            return parsed;
+        } catch (e) {
+            return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+    }
+
+    function saveData(skipCloudPush = false) {
+        appData.updatedAt = Date.now();
+        lastSyncedUpdatedAt = appData.updatedAt;
+        localStorage.setItem('rodzinnyPlanFull_v3', JSON.stringify(appData));
+        if (!skipCloudPush && cloudConfig.dbUrl && isInitialCloudSyncDone) {
+            pushToCloud();
+        }
+    }
+
+    // ================= AUTORYZACJA FIREBASE AUTH (EMAIL/PASSWORD + REFRESH TOKEN) =================
+    async function signInWithFirebaseEmail(apiKey, email, password) {
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, returnSecureToken: true })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error((data.error && data.error.message) || 'Błąd logowania Firebase');
+        }
+        cloudConfig.idToken = data.idToken;
+        cloudConfig.refreshToken = data.refreshToken;
+        cloudConfig.tokenExpiresAt = Date.now() + (parseInt(data.expiresIn || '3600', 10) - 120) * 1000;
+        localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cloudConfig));
+    }
+
+    async function ensureValidFirebaseToken() {
+        if (!cloudConfig.apiKey || !cloudConfig.refreshToken) return cloudConfig.idToken || '';
+        if (cloudConfig.idToken && cloudConfig.tokenExpiresAt && Date.now() < cloudConfig.tokenExpiresAt) {
+            return cloudConfig.idToken;
+        }
+        try {
+            const url = `https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(cloudConfig.apiKey)}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(cloudConfig.refreshToken)}`
+            });
+            const data = await res.json();
+            if (res.ok && data.id_token) {
+                cloudConfig.idToken = data.id_token;
+                cloudConfig.refreshToken = data.refresh_token || cloudConfig.refreshToken;
+                cloudConfig.tokenExpiresAt = Date.now() + (parseInt(data.expires_in || '3600', 10) - 120) * 1000;
+                localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cloudConfig));
+                return cloudConfig.idToken;
+            }
+        } catch (e) {}
+        return cloudConfig.idToken || '';
+    }
+
+    async function getCloudEndpoint() {
+        if (!cloudConfig.dbUrl) return null;
+        const cleanUrl = cloudConfig.dbUrl.replace(/\/+$/, '');
+        const cleanRoom = (cloudConfig.roomId || 'rodzina1').replace(/[^a-zA-Z0-9_-]/g, '');
+        const token = await ensureValidFirebaseToken();
+        const base = `${cleanUrl}/planer_${cleanRoom}.json`;
+        return token ? `${base}?auth=${encodeURIComponent(token)}` : base;
+    }
+
+    async function pushToCloud() {
+        const endpoint = await getCloudEndpoint();
+        if (!endpoint) return;
+        try {
+            if (!appData.updatedAt) appData.updatedAt = Date.now();
+            const res = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(appData)
+            });
+            if (res.ok) {
+                updateSyncBadge('online', cloudConfig.refreshToken ? '🔒 Online (Zalogowano)' : '☁️ Online (Zsynchronizowano)');
+            } else if (res.status === 401 || res.status === 403) {
+                updateSyncBadge('error', '🔒 Brak autoryzacji bazy (Zaloguj się)');
+            } else {
+                updateSyncBadge('error', '⚠️ Błąd zapisu chmury');
+            }
+        } catch (err) {
+            updateSyncBadge('error', '⚠️ Brak połączenia z chmurą');
+        }
+    }
+
+    async function pullFromCloud(force = false) {
+        const endpoint = await getCloudEndpoint();
+        if (!endpoint) return;
+        try {
+            const res = await fetch(endpoint);
+            if (res.status === 401 || res.status === 403) {
+                updateSyncBadge('error', '🔒 Wymagane logowanie do bazy');
+                return;
+            }
+            if (!res.ok) {
+                updateSyncBadge('error', '⚠️ Błąd bazy danych');
+                return;
+            }
+            const remoteData = await res.json();
+            isInitialCloudSyncDone = true;
+
+            if (!remoteData) {
+                appData.updatedAt = Date.now();
+                await pushToCloud();
+                return;
+            }
+
+            if (force || (remoteData.updatedAt && remoteData.updatedAt > (appData.updatedAt || 0))) {
+                appData = remoteData;
+                if (!appData.tasks) appData.tasks = [];
+                if (!appData.kids) appData.kids = [];
+                if (!appData.presets) appData.presets = [];
+                if (!appData.rewards) appData.rewards = [];
+                if (!appData.rewardPresets) appData.rewardPresets = [];
+                lastSyncedUpdatedAt = appData.updatedAt || Date.now();
+                localStorage.setItem('rodzinnyPlanFull_v3', JSON.stringify(appData));
+                applyGlobalScale();
+                applyBoardLayout();
+                if (isParentMode) {
+                    renderAdminPanel();
+                } else {
+                    renderKidsBoard();
+                }
+            }
+            updateSyncBadge('online', cloudConfig.refreshToken ? '🔒 Online (Zabezpieczone)' : '☁️ Online (Na żywo)');
+        } catch (err) {
+            updateSyncBadge('error', '⚠️ Offline');
+        }
+    }
+
+    function updateSyncBadge(state, text) {
+        const badge = document.getElementById('syncStatusBadge');
+        if (!badge) return;
+        badge.className = 'sync-badge ' + (state || '');
+        badge.textContent = text;
+    }
+
+    async function saveCloudConfig() {
+        const dbUrl = document.getElementById('cloudDbUrlInput').value.trim().replace(/\/+$/, '');
+        const roomId = document.getElementById('cloudRoomIdInput').value.trim() || 'rodzina1';
+        const apiKey = document.getElementById('cloudApiKeyInput').value.trim();
+        const email = document.getElementById('cloudEmailInput').value.trim();
+        const password = document.getElementById('cloudPasswordInput').value;
+
+        cloudConfig.dbUrl = dbUrl;
+        cloudConfig.roomId = roomId;
+        cloudConfig.apiKey = apiKey;
+        cloudConfig.email = email;
+
+        if (!dbUrl) {
+            localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cloudConfig));
+            updateSyncBadge('', '☁️ Tryb lokalny');
+            document.getElementById('cloudHelpText').innerHTML = 'Wyłączono synchronizację w chmurze.';
+            return;
+        }
+
+        if (apiKey && email && password) {
+            try {
+                document.getElementById('cloudHelpText').innerHTML = '⏳ Logowanie do Firebase Authentication...';
+                await signInWithFirebaseEmail(apiKey, email, password);
+                document.getElementById('cloudPasswordInput').value = '';
+            } catch (err) {
+                alert('❌ Błąd logowania do Firebase: ' + err.message);
+                document.getElementById('cloudHelpText').innerHTML = '❌ Błąd logowania: ' + err.message;
+                return;
+            }
+        } else {
+            localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cloudConfig));
+        }
+
+        let shareUrl = `${window.location.origin}${window.location.pathname}?db=${encodeURIComponent(dbUrl)}&room=${encodeURIComponent(roomId)}`;
+        if (cloudConfig.apiKey && cloudConfig.refreshToken) {
+            shareUrl += `&apiKey=${encodeURIComponent(cloudConfig.apiKey)}&rt=${encodeURIComponent(cloudConfig.refreshToken)}`;
+        }
+
+        document.getElementById('cloudHelpText').innerHTML = `
+            ✅ Połączono! Skopiuj ten link dla innych urządzeń (zawiera bezpieczny token sesji i konfigurację bazy):<br>
+            <input type="text" class="input-text" style="width:100%; margin-top:6px; font-size:0.8rem;" value="${shareUrl}" onclick="this.select()" readonly>
+        `;
+        await pullFromCloud(true);
+    }
+
+    function logoutCloudSession() {
+        cloudConfig.idToken = '';
+        cloudConfig.refreshToken = '';
+        cloudConfig.tokenExpiresAt = 0;
+        localStorage.setItem('rodzinnyPlan_cloudCfg', JSON.stringify(cloudConfig));
+        document.getElementById('cloudHelpText').innerHTML = '🚪 Wylogowano sesję Firebase z tego urządzenia.';
+        updateSyncBadge('', '☁️ Wylogowano');
+    }
+
+    function handleSyncBadgeClick() {
+        if (!isParentMode) {
+            handleViewSwitch();
+        }
+    }
+
+    setInterval(() => {
+        if (cloudConfig.dbUrl) {
+            pullFromCloud(false);
+        }
+    }, 3000);
+
+    // ================= SKALOWANIE GLOBALNE (40% - 120%) =================
+    function applyGlobalScale() {
+        let scale = appData.globalScale || 1;
+        if (scale < 0.4) scale = 0.4;
+        if (scale > 1.2) scale = 1.2;
+        appData.globalScale = scale;
+
+        const root = document.getElementById('appRoot');
+        root.style.transform = `scale(${scale})`;
+        root.style.width = `${100 / scale}%`;
+        root.style.height = `${100 / scale}vh`;
+        document.getElementById('globalScaleLabel').textContent = Math.round(scale * 100) + '%';
+    }
+
+    function changeGlobalScale(delta) {
+        let next = Math.round(((appData.globalScale || 1) + delta) * 100) / 100;
+        if (next < 0.4) next = 0.4;
+        if (next > 1.2) next = 1.2;
+        appData.globalScale = next;
+        applyGlobalScale();
+        saveData();
+    }
+
+    function resetGlobalScale() {
+        appData.globalScale = 1;
+        applyGlobalScale();
+        saveData();
+    }
+
+    function applyBoardLayout() {
+        const board = document.getElementById('kidsView');
+        const btn = document.getElementById('layoutToggleBtn');
+        if (appData.layout === 'rows') {
+            board.classList.remove('layout-columns');
+            board.classList.add('layout-rows');
+            btn.textContent = '📐 Układ: Jedno nad drugim';
+        } else {
+            board.classList.remove('layout-rows');
+            board.classList.add('layout-columns');
+            btn.textContent = '📐 Układ: Obok siebie';
+        }
+    }
+
+    function toggleBoardLayout() {
+        appData.layout = appData.layout === 'rows' ? 'columns' : 'rows';
+        applyBoardLayout();
+        saveData();
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    function playSound(type) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (type === 'check') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(520, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.18);
+            } else if (type === 'win') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.12);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.25);
+                    o.start(ctx.currentTime + idx * 0.12);
+                    o.stop(ctx.currentTime + idx * 0.12 + 0.25);
+                });
+            }
+        } catch (e) {}
+    }
+
+    function getTasksForKid(kidId) {
+        return (appData.tasks || [])
+            .filter(t => t.assignedKids && t.assignedKids.includes(kidId))
+            .sort((a, b) => {
+                const ordA = (a.orderByKid && a.orderByKid[kidId] !== undefined) ? a.orderByKid[kidId] : 999;
+                const ordB = (b.orderByKid && b.orderByKid[kidId] !== undefined) ? b.orderByKid[kidId] : 999;
+                return ordA - ordB;
+            });
+    }
+
+    function getRewardsForKid(kidId) {
+        return (appData.rewards || [])
+            .filter(r => r.assignedKids && r.assignedKids.includes(kidId))
+            .sort((a, b) => {
+                const ordA = (a.orderByKid && a.orderByKid[kidId] !== undefined) ? a.orderByKid[kidId] : 999;
+                const ordB = (b.orderByKid && b.orderByKid[kidId] !== undefined) ? b.orderByKid[kidId] : 999;
+                return ordA - ordB;
+            });
+    }
+
+    function saveCurrentScrolls() {
+        document.querySelectorAll('.task-list[data-kid-id]').forEach(el => {
+            scrollPositions['task_' + el.dataset.kidId] = el.scrollTop;
+        });
+        document.querySelectorAll('.rewards-section[data-reward-kid-id]').forEach(el => {
+            scrollPositions['rew_' + el.dataset.rewardKidId] = el.scrollTop;
+        });
+    }
+
+    function restoreScrolls() {
+        document.querySelectorAll('.task-list[data-kid-id]').forEach(el => {
+            const pos = scrollPositions['task_' + el.dataset.kidId];
+            if (pos !== undefined) el.scrollTop = pos;
+        });
+        document.querySelectorAll('.rewards-section[data-reward-kid-id]').forEach(el => {
+            const pos = scrollPositions['rew_' + el.dataset.rewardKidId];
+            if (pos !== undefined) el.scrollTop = pos;
+        });
+    }
+
+    function renderKidsBoard() {
+        saveCurrentScrolls();
+        const board = document.getElementById('kidsView');
+        board.innerHTML = '';
+
+        (appData.kids || []).forEach(kid => {
+            const kidTasks = getTasksForKid(kid.id);
+            const kidRewards = getRewardsForKid(kid.id);
+            const total = kidTasks.length;
+            const doneCount = kidTasks.filter(t => t.statusByKid && t.statusByKid[kid.id]).length;
+            const percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+            const zoom = kid.zoom || 1;
+            if (!kidSelectedEmoji[kid.id]) kidSelectedEmoji[kid.id] = '📚';
+
+            const col = document.createElement('div');
+            col.className = 'kid-column';
+            col.dataset.kidColumn = kid.id;
+            col.style.borderTopColor = kid.color;
+            col.style.setProperty('--kid-scale', zoom);
+
+            let rewardsHtml = '';
+            if (kidRewards.length > 0) {
+                const rewardsItemsHtml = kidRewards.map(rew => {
+                    const isRewardDone = !!(rew.statusByKid && rew.statusByKid[kid.id]);
+                    return `
+                        <div class="reward-item ${isRewardDone ? 'done' : ''}" onclick="toggleRewardDone('${kid.id}', '${rew.id}')">
+                            <div class="reward-left">
+                                <div class="check-circle">${isRewardDone ? '✔' : ''}</div>
+                                <span class="reward-icon">${rew.icon}</span>
+                                <span class="reward-title">${rew.title}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                rewardsHtml = `
+                    <div class="rewards-section" data-reward-kid-id="${kid.id}">
+                        <div class="rewards-header">🎁 Nagrody (kliknij, aby odebrać):</div>
+                        <div class="rewards-list-container">
+                            ${rewardsItemsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            col.innerHTML = `
+                <div class="kid-header">
+                    <div class="kid-identity">
+                        <div class="kid-avatar">${kid.avatar}</div>
+                        <div>
+                            <div class="kid-name" style="color:${kid.color}">${kid.name}</div>
+                            <div class="kid-subtitle" style="font-size:0.82rem; color:var(--text-muted); font-weight:700;">
+                                Zrobione: ${doneCount} z ${total}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kid-header-controls">
+                        <div class="zoom-controls" title="Skala tablicy dziecka (40% - 200%)">
+                            <button class="zoom-btn" onclick="changeKidZoom('${kid.id}', -0.1)">🔍-</button>
+                            <button class="zoom-btn" onclick="resetKidZoom('${kid.id}')">${Math.round(zoom * 100)}%</button>
+                            <button class="zoom-btn" onclick="changeKidZoom('${kid.id}', 0.1)">🔍+</button>
+                        </div>
+                        <div class="kid-stars">⭐ ${doneCount}</div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-fill" style="width: ${percent}%"></div>
+                    <div class="progress-label">${percent}%</div>
+                </div>
+
+                <div class="task-list" data-kid-id="${kid.id}"></div>
+
+                <div class="all-done-banner" style="display: ${total > 0 && doneCount === total ? 'block' : 'none'}">
+                    🏆 Brawo ${kid.name}! Wszystkie zadania wykonane! 🎉
+                </div>
+
+                ${rewardsHtml}
+
+                <div class="kid-add-footer">
+                    <button class="btn btn-outline" style="width:100%; justify-content:center;" onclick="toggleKidDrawer('${kid.id}')">
+                        ➕ Dodaj własne zadanie
+                    </button>
+                    <div class="kid-add-drawer ${openKidDrawers[kid.id] ? 'open' : ''}" id="drawer_${kid.id}">
+                        <div class="quick-chips">
+                            <span class="quick-chip" onclick="quickFillKidTask('${kid.id}', '📚', 'Odrobić lekcje')">📚 Lekcje</span>
+                            <span class="quick-chip" onclick="quickFillKidTask('${kid.id}', '🎒', 'Spakować plecak')">🎒 Plecak</span>
+                            <span class="quick-chip" onclick="quickFillKidTask('${kid.id}', '🧹', 'Posprzątać pokój')">🧹 Pokój</span>
+                            <span class="quick-chip" onclick="quickFillKidTask('${kid.id}', '🐕', 'Nakarmić zwierzaka')">🐕 Zwierzak</span>
+                            <span class="quick-chip" onclick="quickFillKidTask('${kid.id}', '🪥', 'Umyć zęby')">🪥 Zęby</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="kidEmoji_${kid.id}" class="input-text" style="width:52px; text-align:center;" value="${kidSelectedEmoji[kid.id]}">
+                            <button type="button" class="emoji-more-btn" onclick="openEmojiLibrary('kidEmoji_${kid.id}')">➕</button>
+                            <input type="text" id="kidInput_${kid.id}" class="input-text" style="flex:1;" placeholder="Wpisz zadanie..." onkeydown="if(event.key==='Enter') addKidOwnTask('${kid.id}')">
+                            <button class="btn btn-success" onclick="addKidOwnTask('${kid.id}')">Dodaj</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const listEl = col.querySelector('.task-list');
+            listEl.addEventListener('scroll', () => {
+                scrollPositions['task_' + kid.id] = listEl.scrollTop;
+            });
+
+            const rewEl = col.querySelector('.rewards-section');
+            if (rewEl) {
+                rewEl.addEventListener('scroll', () => {
+                    scrollPositions['rew_' + kid.id] = rewEl.scrollTop;
+                });
+            }
+
+            kidTasks.forEach(task => {
+                const isDone = !!(task.statusByKid && task.statusByKid[kid.id]);
+                const item = document.createElement('div');
+                item.className = `task-item ${isDone ? 'done' : ''}`;
+                item.draggable = true;
+                item.dataset.taskId = task.id;
+                item.dataset.kidId = kid.id;
+
+                item.innerHTML = `
+                    <div class="task-left" onclick="toggleTaskDone('${kid.id}', '${task.id}')">
+                        <div class="check-circle">${isDone ? '✔' : ''}</div>
+                        <span class="task-icon">${task.icon}</span>
+                        <span class="task-title">${task.title}</span>
+                    </div>
+                    <div class="order-buttons">
+                        <button class="btn-move" onclick="moveTask('${kid.id}', '${task.id}', -1)">⬆️</button>
+                        <button class="btn-move" onclick="moveTask('${kid.id}', '${task.id}', 1)">⬇️</button>
+                    </div>
+                `;
+
+                item.addEventListener('dragstart', () => {
+                    draggedTaskInfo = { kidId: kid.id, taskId: task.id };
+                    item.classList.add('dragging');
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    draggedTaskInfo = null;
+                });
+                item.addEventListener('dragover', (e) => e.preventDefault());
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (!draggedTaskInfo || draggedTaskInfo.kidId !== kid.id) return;
+                    reorderTaskByDrop(kid.id, draggedTaskInfo.taskId, task.id);
+                });
+
+                listEl.appendChild(item);
+            });
+
+            board.appendChild(col);
+        });
+
+        restoreScrolls();
+    }
+
+    function toggleTaskDone(kidId, taskId) {
+        const task = appData.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        if (!task.statusByKid) task.statusByKid = {};
+
+        const newState = !task.statusByKid[kidId];
+        task.statusByKid[kidId] = newState;
+
+        const listEl = document.querySelector(`.task-list[data-kid-id="${kidId}"]`);
+        const itemEl = listEl ? listEl.querySelector(`.task-item[data-task-id="${taskId}"]`) : null;
+
+        if (itemEl && listEl && newState) {
+            const items = Array.from(listEl.querySelectorAll('.task-item'));
+            const currentIndex = items.indexOf(itemEl);
+            const targetIndex = items.length - 1;
+
+            if (currentIndex < targetIndex) {
+                let distance = 0;
+                for (let i = currentIndex; i < targetIndex; i++) {
+                    distance += items[i].offsetHeight + 8;
+                }
+                itemEl.style.transition = 'transform 0.5s ease, background 0.2s, border-color 0.2s';
+                itemEl.style.transform = `translateY(${distance}px)`;
+                itemEl.style.zIndex = '10';
+            }
+        }
+
+        if (newState) {
+            const kidTasks = getTasksForKid(kidId);
+            let maxOrder = 0;
+            kidTasks.forEach(t => {
+                if (t.id !== taskId && t.orderByKid && t.orderByKid[kidId] !== undefined) {
+                    if (t.orderByKid[kidId] > maxOrder) maxOrder = t.orderByKid[kidId];
+                }
+            });
+            if (!task.orderByKid) task.orderByKid = {};
+            task.orderByKid[kidId] = maxOrder + 1;
+        }
+
+        saveData();
+
+        const kidTasksCheck = getTasksForKid(kidId);
+        const total = kidTasksCheck.length;
+        const doneCount = kidTasksCheck.filter(t => t.statusByKid && t.statusByKid[kidId]).length;
+
+        if (newState) {
+            if (total > 0 && doneCount === total) {
+                playSound('win');
+                confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+            } else {
+                playSound('check');
+                confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+            }
+        }
+
+        setTimeout(() => {
+            renderKidsBoard();
+        }, 500);
+    }
+
+    function toggleRewardDone(kidId, rewardId) {
+        const rew = (appData.rewards || []).find(r => r.id === rewardId);
+        if (!rew) return;
+        if (!rew.statusByKid) rew.statusByKid = {};
+
+        const newState = !rew.statusByKid[kidId];
+        rew.statusByKid[kidId] = newState;
+
+        if (newState) {
+            playSound('win');
+            confetti({ particleCount: 60, spread: 70, origin: { y: 0.75 } });
+        }
+
+        saveData();
+        renderKidsBoard();
+    }
+
+    // SKALOWANIE TABLIC DZIECI (40% - 200%)
+    function changeKidZoom(kidId, delta) {
+        const kid = appData.kids.find(k => k.id === kidId);
+        if (!kid) return;
+        let next = Math.round(((kid.zoom || 1) + delta) * 100) / 100;
+        if (next < 0.4) next = 0.4;
+        if (next > 2.0) next = 2.0;
+        kid.zoom = next;
+        saveData();
+        renderKidsBoard();
+    }
+
+    function resetKidZoom(kidId) {
+        const kid = appData.kids.find(k => k.id === kidId);
+        if (!kid) return;
+        kid.zoom = 1;
+        saveData();
+        renderKidsBoard();
+    }
+
+    function moveTask(kidId, taskId, direction) {
+        saveCurrentScrolls();
+        const list = getTasksForKid(kidId);
+        const idx = list.findIndex(t => t.id === taskId);
+        if (idx === -1) return;
+        const targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= list.length) return;
+
+        const temp = list[idx];
+        list[idx] = list[targetIdx];
+        list[targetIdx] = temp;
+
+        list.forEach((t, i) => {
+            if (!t.orderByKid) t.orderByKid = {};
+            t.orderByKid[kidId] = i;
+        });
+
+        saveData();
+        renderKidsBoard();
+    }
+
+    function reorderTaskByDrop(kidId, draggedId, targetId) {
+        if (draggedId === targetId) return;
+        saveCurrentScrolls();
+        const list = getTasksForKid(kidId);
+        const fromIdx = list.findIndex(t => t.id === draggedId);
+        const toIdx = list.findIndex(t => t.id === targetId);
+        if (fromIdx === -1 || toIdx === -1) return;
+
+        const [moved] = list.splice(fromIdx, 1);
+        list.splice(toIdx, 0, moved);
+
+        list.forEach((t, i) => {
+            if (!t.orderByKid) t.orderByKid = {};
+            t.orderByKid[kidId] = i;
+        });
+
+        saveData();
+        renderKidsBoard();
+    }
+
+    function toggleKidDrawer(kidId) {
+        openKidDrawers[kidId] = !openKidDrawers[kidId];
+        const drawer = document.getElementById(`drawer_${kidId}`);
+        if (drawer) drawer.classList.toggle('open', openKidDrawers[kidId]);
+    }
+
+    function quickFillKidTask(kidId, icon, title) {
+        document.getElementById(`kidEmoji_${kidId}`).value = icon;
+        document.getElementById(`kidInput_${kidId}`).value = title;
+        document.getElementById(`kidInput_${kidId}`).focus();
+    }
+
+    function addKidOwnTask(kidId) {
+        saveCurrentScrolls();
+        const icon = document.getElementById(`kidEmoji_${kidId}`).value.trim() || '⭐';
+        const title = document.getElementById(`kidInput_${kidId}`).value.trim();
+        if (!title) return;
+
+        const orderByKid = {};
+        orderByKid[kidId] = getTasksForKid(kidId).length;
+
+        appData.tasks.push({
+            id: 't_' + Date.now(),
+            title,
+            icon,
+            assignedKids: [kidId],
+            statusByKid: {},
+            orderByKid
+        });
+
+        saveData();
+        renderKidsBoard();
+        const listEl = document.querySelector(`.task-list[data-kid-id="${kidId}"]`);
+        if (listEl) listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    function resetAllProgress() {
+        if (!confirm('Rozpocząć Nowy Dzień i odznaczyć wszystkie wykonane zadania oraz odebrane nagrody?')) return;
+        appData.tasks.forEach(t => t.statusByKid = {});
+        (appData.rewards || []).forEach(r => r.statusByKid = {});
+        saveData();
+        renderKidsBoard();
+    }
+
+    // ================= MODAL PEŁNEJ BIBLIOTEKI OBRAZKÓW (+) =================
+    function openEmojiLibrary(target) {
+        emojiPickerTarget = target;
+        const container = document.getElementById('emojiLibraryContent');
+        container.innerHTML = '';
+
+        Object.entries(ALL_EMOJIS_CATALOG).forEach(([category, emojis]) => {
+            const catTitle = document.createElement('div');
+            catTitle.className = 'emoji-category-title';
+            catTitle.textContent = category;
+            container.appendChild(catTitle);
+
+            const grid = document.createElement('div');
+            grid.className = 'emoji-grid';
+            emojis.forEach(em => {
+                const btn = document.createElement('div');
+                btn.className = 'emoji-option';
+                btn.textContent = em;
+                btn.onclick = () => selectEmojiFromLibrary(em);
+                grid.appendChild(btn);
+            });
+            container.appendChild(grid);
+        });
+
+        document.getElementById('emojiLibraryModal').style.display = 'flex';
+    }
+
+    function closeEmojiLibrary() {
+        document.getElementById('emojiLibraryModal').style.display = 'none';
+        emojiPickerTarget = null;
+    }
+
+    function selectEmojiFromLibrary(em) {
+        if (emojiPickerTarget === 'taskAdmin') {
+            selectedEmoji = em;
+            if (!EMOJIS.includes(em)) EMOJIS.unshift(em);
+            renderAdminPanel();
+        } else if (emojiPickerTarget === 'rewardAdmin') {
+            selectedRewardEmoji = em;
+            if (!REWARD_EMOJIS.includes(em)) REWARD_EMOJIS.unshift(em);
+            renderAdminPanel();
+        } else if (emojiPickerTarget === 'newKidAvatar') {
+            const sel = document.getElementById('newKidAvatar');
+            let opt = Array.from(sel.options).find(o => o.value === em);
+            if (!opt) {
+                opt = new Option(`${em} Wybrany`, em);
+                sel.add(opt, 0);
+            }
+            sel.value = em;
+        } else if (emojiPickerTarget) {
+            const inputEl = document.getElementById(emojiPickerTarget);
+            if (inputEl) inputEl.value = em;
+        }
+        closeEmojiLibrary();
+    }
+
+    // ================= PANEL RODZICA =================
+    function handleViewSwitch() {
+        if (!isParentMode) {
+            if (appData.pin && appData.pin.trim() !== '') {
+                const entered = prompt('🔒 Podaj kod PIN Rodzica (domyślny: 1234):');
+                if (entered === null) return;
+                if (entered !== appData.pin) {
+                    alert('❌ Nieprawidłowy kod PIN!');
+                    return;
+                }
+            }
+            isParentMode = true;
+            document.getElementById('kidsView').style.display = 'none';
+            document.getElementById('parentView').style.display = 'flex';
+            document.getElementById('toggleViewBtn').innerHTML = '👀 Wróć do Tablicy Dzieci';
+            renderAdminPanel();
+        } else {
+            isParentMode = false;
+            document.getElementById('parentView').style.display = 'none';
+            document.getElementById('kidsView').style.display = 'flex';
+            document.getElementById('toggleViewBtn').innerHTML = '🔒 Panel Rodzica';
+            renderKidsBoard();
+        }
+    }
+
+    function renderAdminPanel() {
+        document.getElementById('cloudDbUrlInput').value = cloudConfig.dbUrl || '';
+        document.getElementById('cloudRoomIdInput').value = cloudConfig.roomId || 'rodzina1';
+        document.getElementById('cloudApiKeyInput').value = cloudConfig.apiKey || '';
+        document.getElementById('cloudEmailInput').value = cloudConfig.email || '';
+
+        const emojiPicker = document.getElementById('emojiPicker');
+        emojiPicker.innerHTML = '';
+        EMOJIS.forEach(em => {
+            const d = document.createElement('div');
+            d.className = `emoji-option ${em === selectedEmoji ? 'selected' : ''}`;
+            d.textContent = em;
+            d.onclick = () => { selectedEmoji = em; renderAdminPanel(); };
+            emojiPicker.appendChild(d);
+        });
+        const moreTaskBtn = document.createElement('button');
+        moreTaskBtn.type = 'button';
+        moreTaskBtn.className = 'emoji-more-btn';
+        moreTaskBtn.textContent = '➕ Więcej obrazków';
+        moreTaskBtn.onclick = () => openEmojiLibrary('taskAdmin');
+        emojiPicker.appendChild(moreTaskBtn);
+
+        const rewardEmojiPicker = document.getElementById('rewardEmojiPicker');
+        rewardEmojiPicker.innerHTML = '';
+        REWARD_EMOJIS.forEach(em => {
+            const d = document.createElement('div');
+            d.className = `emoji-option ${em === selectedRewardEmoji ? 'selected' : ''}`;
+            d.textContent = em;
+            d.onclick = () => { selectedRewardEmoji = em; renderAdminPanel(); };
+            rewardEmojiPicker.appendChild(d);
+        });
+        const moreRewardBtn = document.createElement('button');
+        moreRewardBtn.type = 'button';
+        moreRewardBtn.className = 'emoji-more-btn';
+        moreRewardBtn.textContent = '➕ Więcej obrazków';
+        moreRewardBtn.onclick = () => openEmojiLibrary('rewardAdmin');
+        rewardEmojiPicker.appendChild(moreRewardBtn);
+
+        const kidsList = document.getElementById('adminKidsList');
+        kidsList.innerHTML = '';
+        (appData.kids || []).forEach((kid, idx) => {
+            const card = document.createElement('div');
+            card.style.cssText = `background:#f8f9fa; border:2px solid #e9ecef; border-left:6px solid ${kid.color}; border-radius:12px; padding:8px 12px; display:flex; align-items:center; gap:8px; font-weight:800;`;
+            card.innerHTML = `
+                <span style="font-size:1.3rem;">${kid.avatar}</span>
+                <span>${kid.name}</span>
+                <button class="btn-move" onclick="moveKidOrder(${idx}, -1)">⬅️</button>
+                <button class="btn-move" onclick="moveKidOrder(${idx}, 1)">➡️</button>
+                <button class="btn btn-warning" style="padding:3px 8px; font-size:0.75rem;" onclick="openEditKidModal('${kid.id}')">✏️ Edytuj</button>
+                <button class="btn btn-danger" style="padding:3px 8px; font-size:0.75rem;" onclick="removeKid('${kid.id}')">Usuń</button>
+            `;
+            kidsList.appendChild(card);
+        });
+
+        const cbContainer = document.getElementById('taskKidsCheckboxes');
+        cbContainer.innerHTML = '';
+        (appData.kids || []).forEach(kid => {
+            const lbl = document.createElement('label');
+            lbl.className = 'kid-checkbox-label';
+            lbl.innerHTML = `<input type="checkbox" name="newTaskKid" value="${kid.id}" checked> <span>${kid.avatar} ${kid.name}</span>`;
+            cbContainer.appendChild(lbl);
+        });
+
+        const rewardCbContainer = document.getElementById('rewardKidsCheckboxes');
+        rewardCbContainer.innerHTML = '';
+        (appData.kids || []).forEach(kid => {
+            const lbl = document.createElement('label');
+            lbl.className = 'kid-checkbox-label';
+            lbl.innerHTML = `<input type="checkbox" name="newRewardKid" value="${kid.id}" checked> <span>${kid.avatar} ${kid.name}</span>`;
+            rewardCbContainer.appendChild(lbl);
+        });
+
+        renderAdminTasksList();
+        renderAdminRewardsList();
+        renderPresets();
+        renderRewardPresets();
+    }
+
+    function moveKidOrder(idx, dir) {
+        const target = idx + dir;
+        if (target < 0 || target >= appData.kids.length) return;
+        const temp = appData.kids[idx];
+        appData.kids[idx] = appData.kids[target];
+        appData.kids[target] = temp;
+        saveData();
+        renderAdminPanel();
+    }
+
+    function addKid() {
+        const name = document.getElementById('newKidName').value.trim();
+        if (!name) return alert('Podaj imię dziecka!');
+        appData.kids.push({
+            id: 'kid_' + Date.now(),
+            name,
+            avatar: document.getElementById('newKidAvatar').value,
+            color: document.getElementById('newKidColor').value,
+            zoom: 1
+        });
+        document.getElementById('newKidName').value = '';
+        saveData();
+        renderAdminPanel();
+    }
+
+    function openEditKidModal(kidId) {
+        const kid = appData.kids.find(k => k.id === kidId);
+        if (!kid) return;
+        document.getElementById('editKidId').value = kid.id;
+        document.getElementById('editKidAvatarInput').value = kid.avatar;
+        document.getElementById('editKidNameInput').value = kid.name;
+        document.getElementById('editKidColorInput').value = kid.color;
+        document.getElementById('editKidModal').style.display = 'flex';
+    }
+
+    function closeEditKidModal() {
+        document.getElementById('editKidModal').style.display = 'none';
+    }
+
+    function saveEditedKid() {
+        const id = document.getElementById('editKidId').value;
+        const kid = appData.kids.find(k => k.id === id);
+        if (!kid) return;
+        const newName = document.getElementById('editKidNameInput').value.trim();
+        if (!newName) return alert('Imię dziecka nie może być puste!');
+        kid.avatar = document.getElementById('editKidAvatarInput').value.trim() || '👦';
+        kid.name = newName;
+        kid.color = document.getElementById('editKidColorInput').value;
+        saveData();
+        closeEditKidModal();
+        renderAdminPanel();
+    }
+
+    function removeKid(kidId) {
+        if (!confirm('Usunąć profil tego dziecka?')) return;
+        appData.kids = appData.kids.filter(k => k.id !== kidId);
+        appData.tasks.forEach(t => t.assignedKids = t.assignedKids.filter(id => id !== kidId));
+        appData.tasks = appData.tasks.filter(t => t.assignedKids.length > 0);
+        appData.rewards.forEach(r => r.assignedKids = r.assignedKids.filter(id => id !== kidId));
+        appData.rewards = appData.rewards.filter(r => r.assignedKids.length > 0);
+        saveData();
+        renderAdminPanel();
+    }
+
+    function selectAllKidsForTask(state) {
+        document.querySelectorAll('input[name="newTaskKid"]').forEach(cb => cb.checked = state);
+    }
+
+    function selectAllKidsForReward(state) {
+        document.querySelectorAll('input[name="newRewardKid"]').forEach(cb => cb.checked = state);
+    }
+
+    function addTaskFromAdmin() {
+        const title = document.getElementById('newTaskText').value.trim();
+        if (!title) return alert('Wpisz treść zadania!');
+        const checkedKids = Array.from(document.querySelectorAll('input[name="newTaskKid"]:checked')).map(cb => cb.value);
+        if (checkedKids.length === 0) return alert('Zaznacz przynajmniej jedno dziecko!');
+
+        const orderByKid = {};
+        checkedKids.forEach(kId => orderByKid[kId] = getTasksForKid(kId).length);
+
+        appData.tasks.push({
+            id: 't_' + Date.now(),
+            title,
+            icon: selectedEmoji,
+            assignedKids: checkedKids,
+            statusByKid: {},
+            orderByKid
+        });
+
+        document.getElementById('newTaskText').value = '';
+        saveData();
+        renderAdminTasksList();
+    }
+
+    function addRewardFromAdmin() {
+        const title = document.getElementById('newRewardText').value.trim();
+        if (!title) return alert('Wpisz treść nagrody!');
+        const checkedKids = Array.from(document.querySelectorAll('input[name="newRewardKid"]:checked')).map(cb => cb.value);
+        if (checkedKids.length === 0) return alert('Zaznacz przynajmniej jedno dziecko dla nagrody!');
+
+        if (!appData.rewards) appData.rewards = [];
+        const orderByKid = {};
+        checkedKids.forEach(kId => orderByKid[kId] = getRewardsForKid(kId).length);
+
+        appData.rewards.push({
+            id: 'r_' + Date.now(),
+            title,
+            icon: selectedRewardEmoji,
+            assignedKids: checkedKids,
+            statusByKid: {},
+            orderByKid
+        });
+
+        document.getElementById('newRewardText').value = '';
+        saveData();
+        renderAdminRewardsList();
+    }
+
+    function renderAdminTasksList() {
+        const container = document.getElementById('adminTasksList');
+        container.innerHTML = '';
+        (appData.tasks || []).forEach((task, idx) => {
+            const badges = (task.assignedKids || []).map(kId => {
+                const k = appData.kids.find(x => x.id === kId);
+                return k ? `<span class="badge-kid" style="background:${k.color}">${k.avatar} ${k.name}</span>` : '';
+            }).join('');
+
+            const row = document.createElement('div');
+            row.className = 'admin-task-row';
+            row.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                    <span style="font-size:1.4rem;">${task.icon}</span>
+                    <div>
+                        <div style="font-weight:800;">${task.title}</div>
+                        <div style="margin-top:3px;">${badges}</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn-move" onclick="moveAdminTask(${idx}, -1)">⬆️</button>
+                    <button class="btn-move" onclick="moveAdminTask(${idx}, 1)">⬇️</button>
+                    <button class="btn btn-warning" style="padding:5px 10px; font-size:0.8rem;" onclick="openEditModal('${task.id}')">✏️ Edytuj</button>
+                    <button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="deleteTask('${task.id}')">🗑️</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function renderAdminRewardsList() {
+        const container = document.getElementById('adminRewardsList');
+        if (!container) return;
+        container.innerHTML = '';
+        (appData.rewards || []).forEach((rew, idx) => {
+            const badges = (rew.assignedKids || []).map(kId => {
+                const k = appData.kids.find(x => x.id === kId);
+                return k ? `<span class="badge-kid" style="background:${k.color}">${k.avatar} ${k.name}</span>` : '';
+            }).join('');
+
+            const row = document.createElement('div');
+            row.className = 'admin-task-row';
+            row.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                    <span style="font-size:1.4rem;">${rew.icon}</span>
+                    <div>
+                        <div style="font-weight:800;">${rew.title}</div>
+                        <div style="margin-top:3px;">${badges}</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn-move" onclick="moveAdminReward(${idx}, -1)">⬆️</button>
+                    <button class="btn-move" onclick="moveAdminReward(${idx}, 1)">⬇️</button>
+                    <button class="btn btn-warning" style="padding:5px 10px; font-size:0.8rem;" onclick="openEditRewardModal('${rew.id}')">✏️ Edytuj</button>
+                    <button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="deleteReward('${rew.id}')">🗑️</button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function moveAdminTask(idx, dir) {
+        const target = idx + dir;
+        if (target < 0 || target >= appData.tasks.length) return;
+        const temp = appData.tasks[idx];
+        appData.tasks[idx] = appData.tasks[target];
+        appData.tasks[target] = temp;
+        appData.kids.forEach(k => {
+            appData.tasks.filter(t => t.assignedKids.includes(k.id)).forEach((t, i) => {
+                if (!t.orderByKid) t.orderByKid = {};
+                t.orderByKid[k.id] = i;
+            });
+        });
+        saveData();
+        renderAdminTasksList();
+    }
+
+    function moveAdminReward(idx, dir) {
+        const target = idx + dir;
+        if (!appData.rewards || target < 0 || target >= appData.rewards.length) return;
+        const temp = appData.rewards[idx];
+        appData.rewards[idx] = appData.rewards[target];
+        appData.rewards[target] = temp;
+        appData.kids.forEach(k => {
+            appData.rewards.filter(r => r.assignedKids.includes(k.id)).forEach((r, i) => {
+                if (!r.orderByKid) r.orderByKid = {};
+                r.orderByKid[k.id] = i;
+            });
+        });
+        saveData();
+        renderAdminRewardsList();
+    }
+
+    function deleteTask(taskId) {
+        appData.tasks = appData.tasks.filter(t => t.id !== taskId);
+        saveData();
+        renderAdminTasksList();
+    }
+
+    function deleteReward(rewardId) {
+        appData.rewards = (appData.rewards || []).filter(r => r.id !== rewardId);
+        saveData();
+        renderAdminRewardsList();
+    }
+
+    function openEditModal(taskId) {
+        const task = appData.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        document.getElementById('editTaskId').value = task.id;
+        document.getElementById('editTaskIcon').value = task.icon;
+        document.getElementById('editTaskTitle').value = task.title;
+
+        const box = document.getElementById('editTaskKidsBox');
+        box.innerHTML = '';
+        appData.kids.forEach(kid => {
+            const checked = task.assignedKids.includes(kid.id) ? 'checked' : '';
+            const lbl = document.createElement('label');
+            lbl.className = 'kid-checkbox-label';
+            lbl.innerHTML = `<input type="checkbox" name="editTaskKid" value="${kid.id}" ${checked}> <span>${kid.avatar} ${kid.name}</span>`;
+            box.appendChild(lbl);
+        });
+        document.getElementById('editTaskModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editTaskModal').style.display = 'none';
+    }
+
+    function saveEditedTask() {
+        const id = document.getElementById('editTaskId').value;
+        const task = appData.tasks.find(t => t.id === id);
+        if (!task) return;
+        const checkedKids = Array.from(document.querySelectorAll('input[name="editTaskKid"]:checked')).map(cb => cb.value);
+        if (checkedKids.length === 0) return alert('Przypisz zadanie do przynajmniej jednego dziecka!');
+        task.icon = document.getElementById('editTaskIcon').value.trim() || '📌';
+        task.title = document.getElementById('editTaskTitle').value.trim();
+        task.assignedKids = checkedKids;
+        saveData();
+        closeEditModal();
+        renderAdminTasksList();
+    }
+
+    function openEditRewardModal(rewardId) {
+        const rew = (appData.rewards || []).find(r => r.id === rewardId);
+        if (!rew) return;
+        document.getElementById('editRewardId').value = rew.id;
+        document.getElementById('editRewardIcon').value = rew.icon;
+        document.getElementById('editRewardTitle').value = rew.title;
+
+        const box = document.getElementById('editRewardKidsBox');
+        box.innerHTML = '';
+        appData.kids.forEach(kid => {
+            const checked = rew.assignedKids.includes(kid.id) ? 'checked' : '';
+            const lbl = document.createElement('label');
+            lbl.className = 'kid-checkbox-label';
+            lbl.innerHTML = `<input type="checkbox" name="editRewardKid" value="${kid.id}" ${checked}> <span>${kid.avatar} ${kid.name}</span>`;
+            box.appendChild(lbl);
+        });
+        document.getElementById('editRewardModal').style.display = 'flex';
+    }
+
+    function closeEditRewardModal() {
+        document.getElementById('editRewardModal').style.display = 'none';
+    }
+
+    function saveEditedReward() {
+        const id = document.getElementById('editRewardId').value;
+        const rew = (appData.rewards || []).find(r => r.id === id);
+        if (!rew) return;
+        const checkedKids = Array.from(document.querySelectorAll('input[name="editRewardKid"]:checked')).map(cb => cb.value);
+        if (checkedKids.length === 0) return alert('Przypisz nagrodę do przynajmniej jednego dziecka!');
+        rew.icon = document.getElementById('editRewardIcon').value.trim() || '🎁';
+        rew.title = document.getElementById('editRewardTitle').value.trim();
+        rew.assignedKids = checkedKids;
+        saveData();
+        closeEditRewardModal();
+        renderAdminRewardsList();
+    }
+
+    // ================= SCHEMATY ZADAŃ =================
+    function renderPresets() {
+        const container = document.getElementById('presetsList');
+        container.innerHTML = '';
+        (appData.presets || []).forEach((preset, idx) => {
+            const card = document.createElement('div');
+            card.className = 'preset-card';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <div style="font-weight:900; font-size:1.05rem;">${preset.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Zadań: ${(preset.tasks || []).length}</div>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn-move" onclick="movePreset(${idx}, -1)">⬆️</button>
+                        <button class="btn-move" onclick="movePreset(${idx}, 1)">⬇️</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-success" style="flex:1; padding:6px 10px; font-size:0.8rem;" onclick="loadPreset('${preset.id}')">📂 Wczytaj</button>
+                    <button class="btn btn-warning" style="padding:6px 10px; font-size:0.8rem;" onclick="openEditPresetModal('${preset.id}')">✏️ Edytuj</button>
+                    <button class="btn btn-danger" style="padding:6px 10px; font-size:0.8rem;" onclick="deletePreset('${preset.id}')">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function movePreset(idx, dir) {
+        const target = idx + dir;
+        if (target < 0 || target >= appData.presets.length) return;
+        const temp = appData.presets[idx];
+        appData.presets[idx] = appData.presets[target];
+        appData.presets[target] = temp;
+        saveData();
+        renderPresets();
+    }
+
+    function saveCurrentAsPreset() {
+        const name = document.getElementById('newPresetName').value.trim();
+        if (!name) return alert('Podaj nazwę schematu zadań!');
+        appData.presets.push({
+            id: 'preset_' + Date.now(),
+            name: '📌 ' + name,
+            tasks: appData.tasks.map(t => ({
+                id: 'pt_' + Math.random().toString(36).substring(2, 8),
+                title: t.title,
+                icon: t.icon,
+                assignedKids: [...t.assignedKids]
+            }))
+        });
+        document.getElementById('newPresetName').value = '';
+        saveData();
+        renderPresets();
+    }
+
+    function loadPreset(presetId) {
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (!preset || !confirm(`Wczytać schemat zadań "${preset.name}"?`)) return;
+        const allKidIds = appData.kids.map(k => k.id);
+        appData.tasks = (preset.tasks || []).map((pt, index) => {
+            let assigned = pt.assignedKids.includes('ALL') ? [...allKidIds] : pt.assignedKids.filter(id => allKidIds.includes(id));
+            if (assigned.length === 0) assigned = [...allKidIds];
+            const orderByKid = {};
+            assigned.forEach(kId => orderByKid[kId] = index);
+            return {
+                id: 't_' + Date.now() + '_' + index,
+                title: pt.title,
+                icon: pt.icon,
+                assignedKids: assigned,
+                statusByKid: {},
+                orderByKid
+            };
+        });
+        saveData();
+        renderAdminTasksList();
+        alert('✅ Schemat zadań wczytany!');
+    }
+
+    function deletePreset(presetId) {
+        if (!confirm('Usunąć ten schemat zadań?')) return;
+        appData.presets = appData.presets.filter(p => p.id !== presetId);
+        saveData();
+        renderPresets();
+    }
+
+    function openEditPresetModal(presetId) {
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (!preset) return;
+        document.getElementById('editPresetId').value = preset.id;
+        document.getElementById('editPresetNameInput').value = preset.name;
+        renderEditedPresetTasks(preset);
+        document.getElementById('editPresetModal').style.display = 'flex';
+    }
+
+    function renderEditedPresetTasks(preset) {
+        const container = document.getElementById('editPresetTasksContainer');
+        container.innerHTML = '';
+        (preset.tasks || []).forEach((pt, idx) => {
+            const row = document.createElement('div');
+            row.className = 'admin-task-row';
+            row.innerHTML = `
+                <input type="text" class="input-text" style="width:50px; text-align:center;" value="${pt.icon}" onchange="updatePresetTaskField('${preset.id}', ${idx}, 'icon', this.value)">
+                <input type="text" class="input-text" style="flex:1;" value="${pt.title}" onchange="updatePresetTaskField('${preset.id}', ${idx}, 'title', this.value)">
+                <button class="btn-move" onclick="movePresetTask('${preset.id}', ${idx}, -1)">⬆️</button>
+                <button class="btn-move" onclick="movePresetTask('${preset.id}', ${idx}, 1)">⬇️</button>
+                <button class="btn btn-danger" style="padding:5px 9px;" onclick="removePresetTask('${preset.id}', ${idx})">🗑️</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function updatePresetTaskField(presetId, idx, field, val) {
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (preset && preset.tasks[idx]) {
+            preset.tasks[idx][field] = val;
+            saveData();
+        }
+    }
+
+    function movePresetTask(presetId, idx, dir) {
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (!preset) return;
+        const target = idx + dir;
+        if (target < 0 || target >= preset.tasks.length) return;
+        const temp = preset.tasks[idx];
+        preset.tasks[idx] = preset.tasks[target];
+        preset.tasks[target] = temp;
+        saveData();
+        renderEditedPresetTasks(preset);
+    }
+
+    function removePresetTask(presetId, idx) {
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (!preset) return;
+        preset.tasks.splice(idx, 1);
+        saveData();
+        renderEditedPresetTasks(preset);
+    }
+
+    function addTaskToEditedPreset() {
+        const presetId = document.getElementById('editPresetId').value;
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (!preset) return;
+        const icon = document.getElementById('presetNewTaskIcon').value.trim() || '📌';
+        const title = document.getElementById('presetNewTaskTitle').value.trim();
+        if (!title) return;
+        if (!preset.tasks) preset.tasks = [];
+        preset.tasks.push({ id: 'pt_' + Date.now(), icon, title, assignedKids: ['ALL'] });
+        document.getElementById('presetNewTaskTitle').value = '';
+        saveData();
+        renderEditedPresetTasks(preset);
+    }
+
+    function saveEditedPresetModal() {
+        const presetId = document.getElementById('editPresetId').value;
+        const preset = appData.presets.find(p => p.id === presetId);
+        if (preset) {
+            preset.name = document.getElementById('editPresetNameInput').value.trim() || preset.name;
+            saveData();
+            renderPresets();
+        }
+        closePresetModal();
+    }
+
+    function closePresetModal() {
+        document.getElementById('editPresetModal').style.display = 'none';
+    }
+
+    // ================= SCHEMATY NAGRÓD =================
+    function renderRewardPresets() {
+        const container = document.getElementById('rewardPresetsList');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!appData.rewardPresets) appData.rewardPresets = [];
+
+        appData.rewardPresets.forEach((rpreset, idx) => {
+            const card = document.createElement('div');
+            card.className = 'preset-card';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <div style="font-weight:900; font-size:1.05rem;">${rpreset.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">Nagród: ${(rpreset.rewards || []).length}</div>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button class="btn-move" onclick="moveRewardPreset(${idx}, -1)">⬆️</button>
+                        <button class="btn-move" onclick="moveRewardPreset(${idx}, 1)">⬇️</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-success" style="flex:1; padding:6px 10px; font-size:0.8rem;" onclick="loadRewardPreset('${rpreset.id}')">📂 Wczytaj</button>
+                    <button class="btn btn-warning" style="padding:6px 10px; font-size:0.8rem;" onclick="openEditRewardPresetModal('${rpreset.id}')">✏️ Edytuj</button>
+                    <button class="btn btn-danger" style="padding:6px 10px; font-size:0.8rem;" onclick="deleteRewardPreset('${rpreset.id}')">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function moveRewardPreset(idx, dir) {
+        const target = idx + dir;
+        if (!appData.rewardPresets || target < 0 || target >= appData.rewardPresets.length) return;
+        const temp = appData.rewardPresets[idx];
+        appData.rewardPresets[idx] = appData.rewardPresets[target];
+        appData.rewardPresets[target] = temp;
+        saveData();
+        renderRewardPresets();
+    }
+
+    function saveCurrentRewardsAsPreset() {
+        const name = document.getElementById('newRewardPresetName').value.trim();
+        if (!name) return alert('Podaj nazwę schematu nagród!');
+        if (!appData.rewardPresets) appData.rewardPresets = [];
+        appData.rewardPresets.push({
+            id: 'rpreset_' + Date.now(),
+            name: '🎁 ' + name,
+            rewards: (appData.rewards || []).map(r => ({
+                id: 'pr_' + Math.random().toString(36).substring(2, 8),
+                title: r.title,
+                icon: r.icon,
+                assignedKids: [...r.assignedKids]
+            }))
+        });
+        document.getElementById('newRewardPresetName').value = '';
+        saveData();
+        renderRewardPresets();
+    }
+
+    function loadRewardPreset(presetId) {
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (!preset || !confirm(`Wczytać schemat nagród "${preset.name}"?`)) return;
+        const allKidIds = appData.kids.map(k => k.id);
+        appData.rewards = (preset.rewards || []).map((pr, index) => {
+            let assigned = pr.assignedKids.includes('ALL') ? [...allKidIds] : pr.assignedKids.filter(id => allKidIds.includes(id));
+            if (assigned.length === 0) assigned = [...allKidIds];
+            const orderByKid = {};
+            assigned.forEach(kId => orderByKid[kId] = index);
+            return {
+                id: 'r_' + Date.now() + '_' + index,
+                title: pr.title,
+                icon: pr.icon,
+                assignedKids: assigned,
+                statusByKid: {},
+                orderByKid
+            };
+        });
+        saveData();
+        renderAdminRewardsList();
+        alert('✅ Schemat nagród wczytany!');
+    }
+
+    function deleteRewardPreset(presetId) {
+        if (!confirm('Usunąć ten schemat nagród?')) return;
+        appData.rewardPresets = (appData.rewardPresets || []).filter(p => p.id !== presetId);
+        saveData();
+        renderRewardPresets();
+    }
+
+    function openEditRewardPresetModal(presetId) {
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (!preset) return;
+        document.getElementById('editRewardPresetId').value = preset.id;
+        document.getElementById('editRewardPresetNameInput').value = preset.name;
+        renderEditedRewardPresetItems(preset);
+        document.getElementById('editRewardPresetModal').style.display = 'flex';
+    }
+
+    function renderEditedRewardPresetItems(preset) {
+        const container = document.getElementById('editRewardPresetItemsContainer');
+        container.innerHTML = '';
+        (preset.rewards || []).forEach((pr, idx) => {
+            const row = document.createElement('div');
+            row.className = 'admin-task-row';
+            row.innerHTML = `
+                <input type="text" class="input-text" style="width:50px; text-align:center;" value="${pr.icon}" onchange="updateRewardPresetField('${preset.id}', ${idx}, 'icon', this.value)">
+                <input type="text" class="input-text" style="flex:1;" value="${pr.title}" onchange="updateRewardPresetField('${preset.id}', ${idx}, 'title', this.value)">
+                <button class="btn-move" onclick="moveRewardPresetItem('${preset.id}', ${idx}, -1)">⬆️</button>
+                <button class="btn-move" onclick="moveRewardPresetItem('${preset.id}', ${idx}, 1)">⬇️</button>
+                <button class="btn btn-danger" style="padding:5px 9px;" onclick="removeRewardPresetItem('${preset.id}', ${idx})">🗑️</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function updateRewardPresetField(presetId, idx, field, val) {
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (preset && preset.rewards[idx]) {
+            preset.rewards[idx][field] = val;
+            saveData();
+        }
+    }
+
+    function moveRewardPresetItem(presetId, idx, dir) {
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (!preset) return;
+        const target = idx + dir;
+        if (target < 0 || target >= preset.rewards.length) return;
+        const temp = preset.rewards[idx];
+        preset.rewards[idx] = preset.rewards[target];
+        preset.rewards[target] = temp;
+        saveData();
+        renderEditedRewardPresetItems(preset);
+    }
+
+    function removeRewardPresetItem(presetId, idx) {
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (!preset) return;
+        preset.rewards.splice(idx, 1);
+        saveData();
+        renderEditedRewardPresetItems(preset);
+    }
+
+    function addRewardToEditedPreset() {
+        const presetId = document.getElementById('editRewardPresetId').value;
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (!preset) return;
+        const icon = document.getElementById('rewardPresetNewIcon').value.trim() || '🎁';
+        const title = document.getElementById('rewardPresetNewTitle').value.trim();
+        if (!title) return;
+        if (!preset.rewards) preset.rewards = [];
+        preset.rewards.push({ id: 'pr_' + Date.now(), icon, title, assignedKids: ['ALL'] });
+        document.getElementById('rewardPresetNewTitle').value = '';
+        saveData();
+        renderEditedRewardPresetItems(preset);
+    }
+
+    function saveEditedRewardPresetModal() {
+        const presetId = document.getElementById('editRewardPresetId').value;
+        const preset = (appData.rewardPresets || []).find(p => p.id === presetId);
+        if (preset) {
+            preset.name = document.getElementById('editRewardPresetNameInput').value.trim() || preset.name;
+            saveData();
+            renderRewardPresets();
+        }
+        closeRewardPresetModal();
+    }
+
+    function closeRewardPresetModal() {
+        document.getElementById('editRewardPresetModal').style.display = 'none';
+    }
+
+    function changePin() {
+        appData.pin = document.getElementById('newPinInput').value.trim();
+        saveData();
+        alert('Zapisano ustawienia kodu PIN!');
+    }
+
+    // START APLIKACJI
+    applyGlobalScale();
+    applyBoardLayout();
+    renderKidsBoard();
+    if (cloudConfig.dbUrl) {
+        pullFromCloud(appData.updatedAt === 0);
+    } else {
+        isInitialCloudSyncDone = true;
+    }
+</script>
+</body>
+</html>
